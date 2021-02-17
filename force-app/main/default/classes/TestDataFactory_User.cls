@@ -2,7 +2,8 @@
 public with sharing class TestDataFactory_User {
     private User usr;
     private static Map<String,Profile> profileMap = new Map<String,Profile>();
-    
+    private static Map<String,UserRole> roleMap = new Map<String,UserRole>();
+
     public TestDataFactory_User(User usr) {
         this.usr = usr;
     }
@@ -34,15 +35,37 @@ public with sharing class TestDataFactory_User {
         usr.ProfileId = profileMap.get(profileName).Id;
         return this;
     }
+    
+    
+	// allow override of role
+    // add to map to avoid requery in same context
+    public TestDataFactory_User overrideRole(String roleName) {
+        roleName = roleName.toLowerCase();
+        if(!roleMap.containsKey(roleName)){
+            UserRole r = [SELECT Id FROM UserRole WHERE Name = :roleName LIMIT 1];
+            roleMap.put(roleName,r);
+        } 
+        usr.UserRoleId = roleMap.get(roleName).Id;
+        return this;
+    }
 
     // don't actually create in testing
     public User create(){
         return usr;
     }
 
-
     private static string setUniqueUserName(){
-        return DateTime.now().getTime() + '@eccles.tests.com';
+		return UserInfo.getOrganizationId() + DateTime.Now().getTime() + Math.random() + '@eccles.tests.com';
+    }
+    
+    public TestDataFactory_User setFirstName(String firstName){
+        usr.firstname = firstName;
+        return this;
+    }
+    
+    public TestDataFactory_User setLastName(String lastName){
+        usr.lastname = lastName;
+        return this;
     }
 
 }
